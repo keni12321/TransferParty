@@ -80,36 +80,27 @@ register("chat", (mode, names) => {
     }
 
     if (mode === "Moderators") {
-        if (IsPartyLeader && HaveMember == false) {
+        if (IsPartyLeader && !HaveMember) {
             setTimeout(() => {ChatLib.chat("§c[§fTransferParty§c]§f §c●§f No Party Member Was Found, Finding a Party Moderator To Transfer")}, 10)
-            let modssArr = names.split(" ● ")
-            modssArr.pop()
-            if(TPSettings.getSetting("Transfer Party Settings", "Transfer To Random Member")) {
-                modssArrString = modssArr[Math.floor(Math.random() * modssArr.length)]
-            }
-            if(TPSettings.getSetting("Transfer Party Settings", "Transfer To Random Member") == false) {
-                modssArrString = modssArr.shift()
-            }
-                setTimeout(function(){TransferPartyMember(modssArrString)}, 10)
+            setTimeout(function(){TransferPartyMember(names)}, 10)
     }}
 
     if (mode === "Members") {
+        HaveMember = true
         if (IsPartyLeader) {
-            HaveMember = true
-            membsArr = names.split(" ● ")
-            membsArr.pop()
-            if(TPSettings.getSetting("Transfer Party Settings", "Transfer To Random Member")) {
-                membsArrString = membsArr[Math.floor(Math.random() * membsArr.length)]
-            }
-            if(TPSettings.getSetting("Transfer Party Settings", "Transfer To Random Member") == false) {
-                membsArrString = membsArr.shift()
-            }
-                setTimeout(function(){TransferPartyMember(membsArrString)}, 10)
+            setTimeout(function(){TransferPartyMember(names)}, 10)
     }}
-
 }).setChatCriteria("Party ${mode}: ${names}")
 
-function TransferPartyMember(ArrString) {
+function TransferPartyMember(names) {
+    Arr = names.split(" ● ")
+    Arr.pop()
+    if(TPSettings.getSetting("Transfer Party Settings", "Transfer To Random Member")) {
+        ArrString = Arr[Math.floor(Math.random() * Arr.length)]
+    }
+    if(TPSettings.getSetting("Transfer Party Settings", "Transfer To Random Member") == false) {
+        ArrString = Arr.shift()
+    }
     let ArrStringUnFormatted = ArrString.replace(/(\[[a-zA-Z0-9\+]+\])+? /g, "").replace(/(&[0123456789ABCDEFLMNOabcdeflmnor])|\[|\]| |\+/g, "")
             commandsQueue.push("/p transfer " + ArrStringUnFormatted)
             setTimeout(() => {
