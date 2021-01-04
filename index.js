@@ -2,28 +2,43 @@
 /// <reference lib="es2015" />
 const { Setting, SettingsObject } = require("SettingsManager/SettingsManager.js")
 const TransferPartyKeyBind = new KeyBind ("Transfer Party", Keyboard.KEY_NONE, ".TransferParty")
-module.exports = {};
 
-var TPSettings = new SettingsObject("TransferParty", [
+var settings = JSON.parse(FileLib.read("TransferParty", "settings.json"))
+if (settings == null) {
+    defaultInfo = JSON.stringify({
+        "Command":null,
+    })
+    FileLib.write("TransferParty","settings.json", defaultInfo)
+    settings = JSON.parse(FileLib.read("TransferParty", "settings.json"))
+}
+CustomCommand = settings.Command
+
+const TPSettings = new SettingsObject("TransferParty", [
     {
         name:"Transfer Party Settings",
         settings: [
             new Setting.Toggle("Transfer Party",true),
-            new Setting.Button("/tp /transferparty /tparty works", "", () =>{}),
+            new Setting.Button("/tp /transferparty /tparty works.", "", () => {}),
             new Setting.Toggle("Transfer To Random Member",false),
             new Setting.Button("", "", () => {}),
             new Setting.Button("&eDiscord Support Server:", "&9https://discord.gg/G6KxSYE7sv", () => {
                 java.awt.Desktop.getDesktop().browse(new java.net.URI("https://discord.gg/G6KxSYE7sv")); // Dungeon Utilities
             })
         ]
+    },
+    {
+        name:"Custom Command",
+        settings: [
+            new Setting.Toggle("Custom Command",false),
+            new Setting.Button("^ Will Execute A Custom Command When No Member Is Presence In The Party", "", () => {}),
+            new Setting.Button("^ can be configured in /tc , /tpcustom <Custom Command>", "", () => {}),
+            new Setting.Button("like /gc owo, /p transfer to someone, or anything", "", () => {}),
+            new Setting.Button(`Current Command is: §6${CustomCommand}§f`, "", () => {})
+        ]
     }
 ])
+TPSettings.setCommand("th").setSize(500, 200)
 Setting.register(TPSettings)
-
-register("command", () => {
-	TPSettings.setSize(Renderer.screen.getWidth() / 2   , Renderer.screen.getHeight() / 2);
-    TPSettings.open();
-}).setName("th");
 
 // code base soopyAddons
 let commandsQueue = []
@@ -43,6 +58,14 @@ register("Tick", function () {
     }
 })
 
+register("command",  (...CustomCommandd) => { 
+    TPCustomCommand(CustomCommandd)
+}).setName("tpcustom")
+
+register("command",  (...CustomCommandd) => { 
+    TPCustomCommand(CustomCommandd)
+}).setName("tc")
+
 register("command", () => {
     TransferParty();
 }).setName("tp")
@@ -55,6 +78,23 @@ register("command", () => {
     TransferParty();
 }).setName("tparty")
 
+function TPCustomCommand(CustomCommand) { // Dungeon Secrets
+    let x = CustomCommand.join(" ")
+    if (x === "") {
+        return ChatLib.chat("§c[§fTransferParty§c]§f §c●§f Please Enter A Custom Command")
+    }
+    if (x.indexOf('/') === -1) {
+        return ChatLib.chat("§c[§fTransferParty§c]§f §c●§f Please Enter A Valid Custom Command")
+    }
+    
+    settings.Command = x
+    newSettings = JSON.stringify({
+        "Command":x,
+    })
+    FileLib.write("TransferParty", "settings.json", newSettings)
+    new TextComponent("§c[§fTransferParty§c]§f §a●§f Your Custom Command Have Been Set!").setHoverValue(`Your Command is ${x}`).chat()
+}
+
 lastAttemptTransferPartyTime = 0
 
 function TransferParty() {
@@ -64,8 +104,11 @@ function TransferParty() {
     IsPartyLeader = false
     HaveMember = false
 }
+let IsPartyLeader = false
+let HaveMember = false
 
 register("chat", (mode, names) => {
+
     if (new Date().getTime() - lastAttemptTransferPartyTime > 1000) {
         return;
     }
@@ -80,16 +123,25 @@ register("chat", (mode, names) => {
     }
 
     if (mode === "Moderators") {
-        if (IsPartyLeader && !HaveMember) {
+        if (IsPartyLeader && HaveMember === false && TPSettings.getSetting("Transfer Party Settings", "Custom Command") === false) {
             setTimeout(() => {ChatLib.chat("§c[§fTransferParty§c]§f §c●§f No Party Member Was Found, Finding a Party Moderator To Transfer")}, 10)
             setTimeout(function(){TransferPartyMember(names)}, 10)
-    }}
+        }
+        if (TPSettings.getSetting("Custom Command", "Custom Command")) {
+                commandsQueue.push(CustomCommand)
+                setTimeout(() => {
+                    new Message("§c[§fTransferParty§c]§f §a●§f Custom Command Completed").chat()
+                }, 10)
+            }
+        }
 
     if (mode === "Members") {
         HaveMember = true
         if (IsPartyLeader) {
             setTimeout(function(){TransferPartyMember(names)}, 10)
-    }}
+        }
+    }
+
 }).setChatCriteria("Party ${mode}: ${names}")
 
 function TransferPartyMember(names) {
