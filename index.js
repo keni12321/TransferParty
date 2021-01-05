@@ -7,12 +7,13 @@ var settings = JSON.parse(FileLib.read("TransferParty", "settings.json"))
 if (settings == null) {
     defaultInfo = JSON.stringify({
         "Command":null,
+        "name":null
     })
     FileLib.write("TransferParty","settings.json", defaultInfo)
     settings = JSON.parse(FileLib.read("TransferParty", "settings.json"))
 }
 CustomCommand = settings.Command
-
+FriendName = settings.Name
 const TPSettings = new SettingsObject("TransferParty", [
     {
         name:"Transfer Party Settings",
@@ -31,9 +32,18 @@ const TPSettings = new SettingsObject("TransferParty", [
         settings: [
             new Setting.Toggle("Custom Command",false),
             new Setting.Button("^ Will Execute A Custom Command When No Member Is Presence In The Party", "", () => {}),
-            new Setting.Button("^ can be configured in /tc , /tpcustom <Custom Command>", "", () => {}),
+            new Setting.Button("^ can be configured in /tpcustom <Your Custom Command>", "", () => {}),
             new Setting.Button("like /gc owo, /p transfer to someone, or anything", "", () => {}),
-            new Setting.Button(`Current Command is: §6${CustomCommand}§f`, "", () => {})
+            new Setting.Button(`Do </tpcustom command> To Find Your Current Command Set`, "", () => {})
+        ]
+    },
+    {
+        name:"Friend",
+        settings: [
+            new Setting.Toggle("Transfer To Friend",false),
+            new Setting.Button("^ Will Transfer To Friend When Friend Is Presence", "", () => {}),
+            new Setting.Button("^ can be configured in /transferfriend <Your Friend's Name>", "", () => {}),
+            new Setting.Button(`Do </tranferfriend name> To Find Your Friend's Name Currently Set`, "", () => {})
         ]
     }
 ])
@@ -59,12 +69,52 @@ register("Tick", function () {
 })
 
 register("command",  (...CustomCommandd) => { 
-    TPCustomCommand(CustomCommandd)
+    if (TPSettings.getSetting("Custom Command", "Custom Command") === false) {
+        return ChatLib.chat("§c[§fTransferParty§c]§f §c●§f Enable The Function On /th First")
+    }
+    let x = CustomCommandd.join(" ")
+    if (x === "") {
+        return ChatLib.chat("§c[§fTransferParty§c]§f §c●§f Please Enter A Custom Command")
+    }
+    if (x === "command") {
+        return ChatLib.chat(`§c[§fTransferParty§c]§f §a●§f Your Command Is ${CustomCommand}`)
+    }
+    if (x.indexOf('/') === -1) {
+        return ChatLib.chat("§c[§fTransferParty§c]§f §c●§f Please Enter A §4Valid§f Custom Command")
+    }
+
+    
+    settings.Command = x
+    newSettings = JSON.stringify({
+        "Command":x,
+        "Name":FriendName,
+    })
+    FileLib.write("TransferParty", "settings.json", newSettings)
+    new TextComponent("§c[§fTransferParty§c]§f §a●§f Your Custom Command Have Been Set!").setHoverValue(`Your Command is ${x}`).chat()
 }).setName("tpcustom")
 
-register("command",  (...CustomCommandd) => { 
-    TPCustomCommand(CustomCommandd)
-}).setName("tc")
+register("command", (...FriendNamee) => {
+    if (TPSettings.getSetting("Friend", "Transfer To Friend") === false) {
+        return ChatLib.chat("§c[§fTransferParty§c]§f §c●§f Enable The Function On /th First")
+    }
+    else if(TPSettings.getSetting("Friend", "Transfer To Friend") === true){
+    let y = FriendNamee.join(" ")
+    if (y === "") {
+        return ChatLib.chat("§c[§fTransferParty§c]§f §c●§f Please Enter Your Friend's Name")
+    }
+    if (y === "name") {
+        return ChatLib.chat(`§c[§fTransferParty§c]§f §a●§f Your Friend's Name Is ${FriendName}`)
+    }
+    settings.Name = y
+    newName = JSON.stringify({
+        "Command":CustomCommand,
+        "Name":y,
+    })
+    FileLib.write("TransferParty", "settings.json", newName)
+    new TextComponent("§c[§fTransferParty§c]§f §a●§f Your Friend's Name Have Been Set!").setHoverValue(`Your Friend's Name is ${y}`).chat()
+}
+}).setName("transferfriend")
+
 
 register("command", () => {
     TransferParty();
@@ -78,23 +128,6 @@ register("command", () => {
     TransferParty();
 }).setName("tparty")
 
-function TPCustomCommand(CustomCommand) { // Dungeon Secrets
-    let x = CustomCommand.join(" ")
-    if (x === "") {
-        return ChatLib.chat("§c[§fTransferParty§c]§f §c●§f Please Enter A Custom Command")
-    }
-    if (x.indexOf('/') === -1) {
-        return ChatLib.chat("§c[§fTransferParty§c]§f §c●§f Please Enter A Valid Custom Command")
-    }
-    
-    settings.Command = x
-    newSettings = JSON.stringify({
-        "Command":x,
-    })
-    FileLib.write("TransferParty", "settings.json", newSettings)
-    new TextComponent("§c[§fTransferParty§c]§f §a●§f Your Custom Command Have Been Set!").setHoverValue(`Your Command is ${x}`).chat()
-}
-
 lastAttemptTransferPartyTime = 0
 
 function TransferParty() {
@@ -103,9 +136,11 @@ function TransferParty() {
     lastAttemptTransferPartyTime = new Date().getTime()
     IsPartyLeader = false
     HaveMember = false
+    FriendPresence = false
 }
 let IsPartyLeader = false
 let HaveMember = false
+let FriendPresence = false
 
 register("chat", (mode, names) => {
 
@@ -113,31 +148,47 @@ register("chat", (mode, names) => {
         return;
     }
 
+    if (names.includes(FriendName) && TPSettings.getSetting("Friend", "Transfer To Friend") === true && IsPartyLeader) {
+        FriendPresence = true
+        ChatLib.command("p transfer " + FriendName)
+        return setTimeout(() => {ChatLib.chat("§c[§fTransferParty§c]§f §a●§f Transfer Done To Friend")},1000)
+    }
+
+    if (names.includes(FriendName) === false && TPSettings.getSetting("Friend", "Transfer To Friend") === true && IsPartyLeader) {
+        setTimeout(() => {ChatLib.chat("§c[§fTransferParty§c]§f §c●§f Friend Is Not Present")},1)
+    }
+
     if (mode === "Leader") {
         if (names.includes(Player.getName())) {
             IsPartyLeader = true
         }
         else if (!IsPartyLeader) {
-            setTimeout(() => {ChatLib.chat("§c[§fTransferParty§c]§f §c●§f You're Not The Party Leader")}, 10)
+            return setTimeout(() => {ChatLib.chat("§c[§fTransferParty§c]§f §c●§f You're Not The Party Leader")}, 10)
         }
     }
 
     if (mode === "Moderators") {
-        if (IsPartyLeader && HaveMember === false && TPSettings.getSetting("Transfer Party Settings", "Custom Command") === false) {
-            setTimeout(() => {ChatLib.chat("§c[§fTransferParty§c]§f §c●§f No Party Member Was Found, Finding a Party Moderator To Transfer")}, 10)
+        if (IsPartyLeader && HaveMember === false && TPSettings.getSetting("Custom Command", "Custom Command") === false && FriendPresence === false) {
+            setTimeout(() => {ChatLib.chat("§c[§fTransferParty§c]§f §c●§f Finding a Party Moderator To Transfer")}, 10)
             setTimeout(function(){TransferPartyMember(names)}, 10)
         }
-        if (TPSettings.getSetting("Custom Command", "Custom Command")) {
-                commandsQueue.push(CustomCommand)
+        else if (TPSettings.getSetting("Custom Command", "Custom Command")) {
+                if (x !== CustomCommand){
+                    ChatLib.say(x)
+                }
+                if (x === CustomCommand){
+                    ChatLib.say(CustomCommand)
+                }
                 setTimeout(() => {
                     new Message("§c[§fTransferParty§c]§f §a●§f Custom Command Completed").chat()
                 }, 10)
-            }
+            
         }
+    }
 
     if (mode === "Members") {
         HaveMember = true
-        if (IsPartyLeader) {
+        if (IsPartyLeader && FriendPresence === false) {
             setTimeout(function(){TransferPartyMember(names)}, 10)
         }
     }
@@ -150,7 +201,7 @@ function TransferPartyMember(names) {
     if(TPSettings.getSetting("Transfer Party Settings", "Transfer To Random Member")) {
         ArrString = Arr[Math.floor(Math.random() * Arr.length)]
     }
-    if(TPSettings.getSetting("Transfer Party Settings", "Transfer To Random Member") == false) {
+    if(TPSettings.getSetting("Transfer Party Settings", "Transfer To Random Member") === false) {
         ArrString = Arr.shift()
     }
     let ArrStringUnFormatted = ArrString.replace(/(\[[a-zA-Z0-9\+]+\])+? /g, "").replace(/(&[0123456789ABCDEFLMNOabcdeflmnor])|\[|\]| |\+/g, "")

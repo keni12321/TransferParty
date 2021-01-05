@@ -1,7 +1,7 @@
 {
     "$schema": "../CtAutocomplete/schema.json",
     "name": "TransferParty",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "creator": "ke7ni",
     "description": "Hypixel Skyblock Modules Which Help You in Transfering Party",
     "entry": "index.js",
