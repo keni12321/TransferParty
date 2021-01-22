@@ -168,7 +168,7 @@ register("chat", (mode, names) => {
     }
 
     if (mode === "Moderators") {
-        if (IsPartyLeader && HaveMember === false && TPSettings.getSetting("Custom Command", "Custom Command") === false && FriendPresence === false) {
+        setTimeout(() => {if (IsPartyLeader && HaveMember === false && TPSettings.getSetting("Custom Command", "Custom Command") === false && FriendPresence === false) {
             setTimeout(() => {ChatLib.chat("§c[§fTransferParty§c]§f §c●§f Finding a Party Moderator To Transfer")}, 10)
             setTimeout(function(){TransferPartyMember(names)}, 10)
         }
@@ -183,8 +183,7 @@ register("chat", (mode, names) => {
                     new Message("§c[§fTransferParty§c]§f §a●§f Custom Command Completed").chat()
                 }, 10)
             
-        }
-    }
+        }}, 10)}
 
     if (mode === "Members") {
         HaveMember = true
@@ -192,7 +191,6 @@ register("chat", (mode, names) => {
             setTimeout(function(){TransferPartyMember(names)}, 10)
         }
     }
-
 }).setChatCriteria("Party ${mode}: ${names}")
 
 function TransferPartyMember(names) {
