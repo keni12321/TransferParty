@@ -3,17 +3,14 @@
 const { Setting, SettingsObject } = require("SettingsManager/SettingsManager.js")
 const TransferPartyKeyBind = new KeyBind ("Transfer Party", Keyboard.KEY_NONE, ".TransferParty")
 
-var settings = JSON.parse(FileLib.read("TransferParty", "settings.json"))
-if (settings == null) {
-    defaultInfo = JSON.stringify({
-        "Command":null,
-        "name":null
-    })
-    FileLib.write("TransferParty","settings.json", defaultInfo)
-    settings = JSON.parse(FileLib.read("TransferParty", "settings.json"))
-}
-CustomCommand = settings.Command
-FriendName = settings.Name
+import PersistentVariableFactory from 'PersistentVariables/index';
+const factory = new PersistentVariableFactory('TransferParty');
+
+const Command = factory.create('Command', "");
+const Name = factory.create('Name', "");
+var FriendName = Name.get()
+var CustomCommand = Command.get()
+
 const TPSettings = new SettingsObject("TransferParty", [
     {
         name:"Transfer Party Settings",
@@ -82,14 +79,7 @@ register("command",  (...CustomCommandd) => {
     if (x.indexOf('/') === -1) {
         return ChatLib.chat("§c[§fTransferParty§c]§f §c●§f Please Enter A §4Valid§f Custom Command")
     }
-
-    
-    settings.Command = x
-    newSettings = JSON.stringify({
-        "Command":x,
-        "Name":FriendName,
-    })
-    FileLib.write("TransferParty", "settings.json", newSettings)
+    Command.set(x)
     new TextComponent("§c[§fTransferParty§c]§f §a●§f Your Custom Command Have Been Set!").setHoverValue(`Your Command is ${x}`).chat()
 }).setName("tpcustom")
 
@@ -105,12 +95,7 @@ register("command", (...FriendNamee) => {
     if (y === "name") {
         return ChatLib.chat(`§c[§fTransferParty§c]§f §a●§f Your Friend's Name Is ${FriendName}`)
     }
-    settings.Name = y
-    newName = JSON.stringify({
-        "Command":CustomCommand,
-        "Name":y,
-    })
-    FileLib.write("TransferParty", "settings.json", newName)
+    Name.set(y)
     new TextComponent("§c[§fTransferParty§c]§f §a●§f Your Friend's Name Have Been Set!").setHoverValue(`Your Friend's Name is ${y}`).chat()
 }
 }).setName("transferfriend")
