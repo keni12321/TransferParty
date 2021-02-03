@@ -11,12 +11,16 @@ const Name = factory.create('Name', "");
 var FriendName = Name.get()
 var CustomCommand = Command.get()
 
+var ding = new Sound({source: "ding.ogg",});
+
 const TPSettings = new SettingsObject("TransferParty", [
     {
         name:"Transfer Party Settings",
         settings: [
             new Setting.Toggle("Transfer Party",true),
             new Setting.Button("/tp /transferparty /tparty works.", "", () => {}),
+            new Setting.Toggle("Play Sound When Transfer Completed",true),
+            new Setting.Toggle("Disable Message Alert When Transfer Completed",false),
             new Setting.Toggle("Transfer To Random Member",false),
             new Setting.Button("", "", () => {}),
             new Setting.Button("&eDiscord Support Server:", "&9https://discord.gg/G6KxSYE7sv", () => {
@@ -80,7 +84,7 @@ register("command",  (...CustomCommandd) => {
         return ChatLib.chat("§c[§fTransferParty§c]§f §c●§f Please Enter A §4Valid§f Custom Command")
     }
     Command.set(x)
-    new TextComponent("§c[§fTransferParty§c]§f §a●§f Your Custom Command Have Been Set!").setHoverValue(`Your Command is ${x}`).chat()
+    new TextComponent("§c[§fTransferParty§c]§f §a●§f Your Custom Command Have Been Set! &8(Hover)").setHoverValue(`Your Command is ${x}`).chat()
 }).setName("tpcustom")
 
 register("command", (...FriendNamee) => {
@@ -96,7 +100,7 @@ register("command", (...FriendNamee) => {
         return ChatLib.chat(`§c[§fTransferParty§c]§f §a●§f Your Friend's Name Is ${FriendName}`)
     }
     Name.set(y)
-    new TextComponent("§c[§fTransferParty§c]§f §a●§f Your Friend's Name Have Been Set!").setHoverValue(`Your Friend's Name is ${y}`).chat()
+    new TextComponent("§c[§fTransferParty§c]§f §a●§f Your Friend's Name Have Been Set! &8(Hover)").setHoverValue(`Your Friend's Name is ${y}`).chat()
 }
 }).setName("transferfriend")
 
@@ -116,16 +120,14 @@ register("command", () => {
 lastAttemptTransferPartyTime = 0
 
 function TransferParty() {
-    if(TPSettings.getSetting("Transfer Party Settings", "Transfer Party"))
+    if(TPSettings.getSetting("Transfer Party Settings", "Transfer Party")) {
     ChatLib.say("/pl")
     lastAttemptTransferPartyTime = new Date().getTime()
     IsPartyLeader = false
     HaveMember = false
     FriendPresence = false
+    }
 }
-let IsPartyLeader = false
-let HaveMember = false
-let FriendPresence = false
 
 register("chat", (mode, names) => {
 
@@ -135,13 +137,16 @@ register("chat", (mode, names) => {
 
     if (names.includes(FriendName) && TPSettings.getSetting("Friend", "Transfer To Friend") === true && IsPartyLeader) {
         FriendPresence = true
-        ChatLib.command("p transfer " + FriendName)
-        return setTimeout(() => {ChatLib.chat("§c[§fTransferParty§c]§f §a●§f Transfer Done To Friend")},1000)
-    }
-
-    if (names.includes(FriendName) === false && TPSettings.getSetting("Friend", "Transfer To Friend") === true && IsPartyLeader) {
-        setTimeout(() => {ChatLib.chat("§c[§fTransferParty§c]§f §c●§f Friend Is Not Present")},1)
-    }
+        ChatLib.command("p transfer " + FriendName) 
+            if(TPSettings.getSetting("Transfer Party Settings", "Disable Message Alert When Transfer Completed") === false) {
+                setTimeout(() => {
+                    ChatLib.chat("§c[§fTransferParty§c]§f §a●§f Transfer Done To Friend")
+                }, 1000);
+            }
+            if(TPSettings.getSetting("Transfer Party Settings", "Play Sound When Transfer Completed") === true) {
+                ding.play()
+            }
+        }
 
     if (mode === "Leader") {
         if (names.includes(Player.getName())) {
@@ -192,6 +197,11 @@ function TransferPartyMember(names) {
             setTimeout(() => {
             CurrentTime = new Date().getTime()
             CurrentTimeString = CurrentTime-lastAttemptTransferPartyTime
+            if(TPSettings.getSetting("Transfer Party Settings", "Disable Message Alert When Transfer Completed") === false) {
             new TextComponent("§c[§fTransferParty§c]§f §a●§f Transfer Complete").setHoverValue(`Transfer Done in ${CurrentTimeString} Milliseconds`).chat()
-            }, 1000)
+            }
+            if(TPSettings.getSetting("Transfer Party Settings", "Play Sound When Transfer Completed") === true) {
+               ding.play()
+            }
+        }, 1000)
 }
