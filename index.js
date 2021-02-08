@@ -158,22 +158,20 @@ register("chat", (mode, names) => {
     }
 
     if (mode === "Moderators") {
-        setTimeout(() => {if (IsPartyLeader && HaveMember === false && TPSettings.getSetting("Custom Command", "Custom Command") === false && FriendPresence === false) {
-            setTimeout(() => {ChatLib.chat("§c[§fTransferParty§c]§f §c●§f Finding a Party Moderator To Transfer")}, 10)
-            setTimeout(function(){TransferPartyMember(names)}, 10)
+        setTimeout(() => {
+            if (IsPartyLeader && HaveMember === false && TPSettings.getSetting("Custom Command", "Custom Command") === false && FriendPresence === false) {
+                setTimeout(() => {ChatLib.chat("§c[§fTransferParty§c]§f §c●§f Finding a Party Moderator To Transfer")},10)
+                TransferPartyMember(names)
+            }
+        else if (IsPartyLeader && HaveMember === false && TPSettings.getSetting("Custom Command", "Custom Command") === true && FriendPresence === false) {
+            setTimeout(() => {
+                ChatLib.say(CustomCommand)
+                if(TPSettings.getSetting("Transfer Party Settings", "Disable Message Alert When Transfer Completed") === false) {
+                new Message("§c[§fTransferParty§c]§f §a●§f Custom Command Completed").chat()
+                }   
+            }, 10)
         }
-        else if (TPSettings.getSetting("Custom Command", "Custom Command")) {
-                if (x !== CustomCommand){
-                    ChatLib.say(x)
-                }
-                if (x === CustomCommand){
-                    ChatLib.say(CustomCommand)
-                }
-                setTimeout(() => {
-                    new Message("§c[§fTransferParty§c]§f §a●§f Custom Command Completed").chat()
-                }, 10)
-            
-        }}, 10)}
+    }, 10)}
 
     if (mode === "Members") {
         HaveMember = true
@@ -181,6 +179,7 @@ register("chat", (mode, names) => {
             setTimeout(function(){TransferPartyMember(names)}, 10)
         }
     }
+    ChatLib.chat(`${IsPartyLeader},${HaveMember},${TPSettings.getSetting("Custom Command", "Custom Command")}, ${FriendPresence}`)
 }).setChatCriteria("Party ${mode}: ${names}")
 
 function TransferPartyMember(names) {
