@@ -52,18 +52,7 @@ TPSettings.setCommand("th").setSize(500, 200)
 Setting.register(TPSettings)
 
 // code base soopyAddons
-let commandsQueue = []
-let commandsQueueLast = new Date().getTime();
-register("Tick", function () {
-    if (new Date().getTime() - commandsQueueLast > 500) {
-        commandsQueueLast = new Date().getTime()
-        if (commandsQueue.length > 0) {
-            let thing = commandsQueue.shift()
-            if (thing !== "") {
-                ChatLib.say(thing)
-            }
-        }
-    }
+register("Tick", () => {
     if (TransferPartyKeyBind.isPressed()) {
         TransferParty();
     }
@@ -176,10 +165,9 @@ register("chat", (mode, names) => {
     if (mode === "Members") {
         HaveMember = true
         if (IsPartyLeader && FriendPresence === false) {
-            setTimeout(function(){TransferPartyMember(names)}, 10)
+            setTimeout(() =>{TransferPartyMember(names)}, 10)
         }
     }
-    ChatLib.chat(`${IsPartyLeader},${HaveMember},${TPSettings.getSetting("Custom Command", "Custom Command")}, ${FriendPresence}`)
 }).setChatCriteria("Party ${mode}: ${names}")
 
 function TransferPartyMember(names) {
@@ -192,7 +180,7 @@ function TransferPartyMember(names) {
         ArrString = Arr.shift()
     }
     let ArrStringUnFormatted = ArrString.replace(/(\[[a-zA-Z0-9\+]+\])+? /g, "").replace(/(&[0123456789ABCDEFLMNOabcdeflmnor])|\[|\]| |\+/g, "")
-            commandsQueue.push("/p transfer " + ArrStringUnFormatted)
+            ChatLib.chat("/p transfer " + ArrStringUnFormatted)
             setTimeout(() => {
             CurrentTime = new Date().getTime()
             CurrentTimeString = CurrentTime-lastAttemptTransferPartyTime
